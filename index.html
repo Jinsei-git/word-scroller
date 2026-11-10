@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ランダムワード・スクロールガチャ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Zen Maru Gothic"', '"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'glow-blue': '0 0 25px -5px rgba(59, 130, 246, 0.4)',
+                        'glow-emerald': '0 0 25px -5px rgba(16, 185, 129, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .slot-window {
+            perspective: 1000px;
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800 py-6 px-4 sm:px-6 antialiased selection:bg-indigo-500 selection:text-white">
+
+    <div class="max-w-2xl mx-auto space-y-6">
+
+        <!-- Header -->
+        <header class="text-center py-4 bg-white rounded-2xl shadow-sm border border-slate-200/80 px-4">
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                ランダムワードスクローラー
+            </h1>
+        </header>
+
+        <!-- SINGLE SLOT SECTION (TOP) -->
+        <section class="bg-white rounded-3xl p-5 sm:p-6 shadow-md border border-slate-200/80 transition-all duration-300 hover:shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
+                        1
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-800 text-base sm:text-lg leading-tight">シングルルーレット</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slot Display Area -->
+            <div class="slot-window relative h-28 sm:h-32 rounded-2xl overflow-hidden border-2 border-slate-800 flex items-center justify-center shadow-inner mb-4">
+                <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none z-10"></div>
+                <div id="top-display" class="text-2xl sm:text-4xl font-extrabold text-amber-300 tracking-wider text-center px-4 transition-transform duration-75 drop-shadow-[0_2px_8px_rgba(251,191,36,0.3)]">
+                    READY
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="space-y-4">
+                <button id="top-btn" onclick="startTopSpin()" class="w-full py-3.5 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-base rounded-xl shadow-md hover:shadow-glow-blue active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play text-sm"></i>
+                    <span>スタート</span>
+                </button>
+
+                <!-- Input Accordion / Area -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
+                    <div class="px-4 py-2.5 bg-slate-100/70 border-b border-slate-200 text-xs font-bold text-slate-600 flex items-center justify-between">
+                        <span><i class="fa-solid fa-[#1e293b] fa-list-ul mr-1.5"></i> シングル用ワードリスト (1行に1つ)</span>
+                        <span id="top-count" class="text-slate-400 font-normal">5項目</span>
+                    </div>
+                    <textarea id="top-words-input" oninput="updateCounts()" rows="3" class="w-full p-3 bg-transparent text-sm text-slate-700 focus:outline-none focus:bg-white resize-y custom-scrollbar font-sans" placeholder="1行に1つ言葉を入力...">大吉&#10;中吉&#10;小吉&#10;吉&#10;凶</textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRIPLE SLOT SECTION (BOTTOM) -->
+        <section class="bg-white rounded-3xl p-5 sm:p-6 shadow-md border border-slate-200/80 transition-all duration-300 hover:shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">
+                        3
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-800 text-base sm:text-lg leading-tight">トリプルルーレット</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slot Display Area (3 Slots Stacked Vertically) -->
+            <div class="flex flex-col gap-2.5 mb-4">
+                <!-- Slot 1 -->
+                <div class="slot-window relative h-16 sm:h-20 rounded-2xl overflow-hidden border-2 border-slate-800 flex items-center justify-center shadow-inner">
+                    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none z-10"></div>
+                    <div id="bottom-display-0" class="text-lg sm:text-2xl font-bold text-emerald-400 text-center px-4 drop-shadow-[0_2px_6px_rgba(52,211,153,0.3)]">
+                        #1
+                    </div>
+                </div>
+                <!-- Slot 2 -->
+                <div class="slot-window relative h-16 sm:h-20 rounded-2xl overflow-hidden border-2 border-slate-800 flex items-center justify-center shadow-inner">
+                    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none z-10"></div>
+                    <div id="bottom-display-1" class="text-lg sm:text-2xl font-bold text-emerald-400 text-center px-4 drop-shadow-[0_2px_6px_rgba(52,211,153,0.3)]">
+                        #2
+                    </div>
+                </div>
+                <!-- Slot 3 -->
+                <div class="slot-window relative h-16 sm:h-20 rounded-2xl overflow-hidden border-2 border-slate-800 flex items-center justify-center shadow-inner">
+                    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none z-10"></div>
+                    <div id="bottom-display-2" class="text-lg sm:text-2xl font-bold text-emerald-400 text-center px-4 drop-shadow-[0_2px_6px_rgba(52,211,153,0.3)]">
+                        #3
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="space-y-4">
+                <button id="bottom-btn" onclick="startBottomSpin()" class="w-full py-3.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-base rounded-xl shadow-md hover:shadow-glow-emerald active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play text-sm"></i>
+                    <span>スタート</span>
+                </button>
+
+                <!-- Input Area -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
+                    <div class="px-4 py-2.5 bg-slate-100/70 border-b border-slate-200 text-xs font-bold text-slate-600 flex items-center justify-between">
+                        <span><i class="fa-solid fa-list-ul mr-1.5"></i> トリプル用ワードリスト (最低3つ必要)</span>
+                        <span id="bottom-count" class="text-slate-400 font-normal">7項目</span>
+                    </div>
+                    <textarea id="bottom-words-input" oninput="updateCounts()" rows="4" class="w-full p-3 bg-transparent text-sm text-slate-700 focus:outline-none focus:bg-white resize-y custom-scrollbar font-sans" placeholder="1行に1つ言葉を入力...">りんご&#10;みかん&#10;バナナ&#10;ぶどう&#10;いちご&#10;スイカ&#10;メロン</textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- Message Toast / Modal container -->
+        <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 opacity-0 pointer-events-none z-50 transform translate-y-4 text-sm font-semibold">
+            <i id="toast-icon" class="fa-solid fa-circle-info text-amber-400"></i>
+            <span id="toast-message">メッセージ</span>
+        </div>
+
+        <footer class="text-center text-xs text-slate-400 py-2">
+            Random Word Scroller App &copy; Local & Mobile Ready
+        </footer>
+
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // App State
+        let isTopSpinning = false;
+        let isBottomSpinning = false;
+
+        // Sound / Audio Feedback using Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTickSound() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.04);
+                
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.04);
+            } catch(e) {}
+        }
+
+        function playStopSound() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); // E5
+                
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+            } catch(e) {}
+        }
+
+        // Parse words from textarea
+        function getWords(elementId) {
+            const raw = document.getElementById(elementId).value;
+            return raw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+        }
+
+        // Update word counters
+        function updateCounts() {
+            const topWords = getWords('top-words-input');
+            const bottomWords = getWords('bottom-words-input');
+            document.getElementById('top-count').textContent = `${topWords.length}項目`;
+            document.getElementById('bottom-count').textContent = `${bottomWords.length}項目`;
+        }
+
+        // Show Toast Notifications
+        let toastTimeout;
+        function showToast(msg, iconClass = 'fa-circle-exclamation text-amber-400') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.textContent = msg;
+            toastIcon.className = `fa-solid ${iconClass}`;
+
+            toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+            }, 3000);
+        }
+
+        // Helper: Pick Random Element
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        // Helper: Pick N Unique Random Elements
+        function getRandomUniqueItems(arr, count) {
+            const shuffled = [...arr].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        }
+
+        // --- SINGLE SLOT LOGIC ---
+        function startTopSpin() {
+            if (isTopSpinning) return;
+
+            const words = getWords('top-words-input');
+            if (words.length === 0) {
+                showToast('シングル用の言葉を1つ以上入力してください。');
+                return;
+            }
+
+            isTopSpinning = true;
+            const btn = document.getElementById('top-btn');
+            const display = document.getElementById('top-display');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            let steps = Math.floor(Math.random() * 15) + 25; // 25 to 40 steps
+            let delay = 30; // initial speed (ms)
+
+            function step() {
+                if (steps > 0) {
+                    display.textContent = getRandomItem(words);
+                    playTickSound();
+                    steps--;
+
+                    // Deceleration curve
+                    if (steps < 10) {
+                        const factor = 10 - steps;
+                        delay = 30 + Math.pow(factor, 1.6) * 15;
+                    }
+
+                    setTimeout(step, delay);
+                } else {
+                    // Final Selection
+                    display.textContent = getRandomItem(words);
+                    playStopSound();
+                    isTopSpinning = false;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+
+            step();
+        }
+
+        // --- TRIPLE SLOT LOGIC ---
+        function startBottomSpin() {
+            if (isBottomSpinning) return;
+
+            const words = getWords('bottom-words-input');
+            if (words.length < 3) {
+                showToast('トリプル抽選には言葉が最低3つ必要です。');
+                return;
+            }
+
+            isBottomSpinning = true;
+            const btn = document.getElementById('bottom-btn');
+            const displays = [
+                document.getElementById('bottom-display-0'),
+                document.getElementById('bottom-display-1'),
+                document.getElementById('bottom-display-2')
+            ];
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            let steps = Math.floor(Math.random() * 15) + 30; // 30 to 45 steps
+            let delay = 35; // initial speed (ms)
+
+            function step() {
+                if (steps > 0) {
+                    const currentThree = getRandomUniqueItems(words, 3);
+                    displays.forEach((d, i) => {
+                        d.textContent = currentThree[i];
+                    });
+                    playTickSound();
+                    steps--;
+
+                    // Deceleration curve
+                    if (steps < 12) {
+                        const factor = 12 - steps;
+                        delay = 35 + Math.pow(factor, 1.6) * 16;
+                    }
+
+                    setTimeout(step, delay);
+                } else {
+                    // Final Selection (Guaranteed 3 unique)
+                    const finalThree = getRandomUniqueItems(words, 3);
+                    displays.forEach((d, i) => {
+                        d.textContent = finalThree[i];
+                    });
+                    playStopSound();
+                    isBottomSpinning = false;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+
+            step();
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            updateCounts();
+        };
+    </script>
+</body>
+</html>
